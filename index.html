@@ -67,6 +67,14 @@
       font-weight: 600;
       text-decoration: none;
     }
+    .nav-date {
+      color: var(--muted);
+      font-size: .82rem;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: .25rem .85rem;
+      white-space: nowrap;
+    }
 
     /* ── HERO ── */
     .hero {
@@ -330,8 +338,18 @@
     <a href="#usage">사용법</a>
     <a href="#output">출력</a>
   </div>
-  <a class="badge-repo" href="https://github.com/suh0819-star/jang2" target="_blank">GitHub ↗</a>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="nav-date" id="today-date"></span>
+    <a class="badge-repo" href="https://github.com/suh0819-star/jang2" target="_blank">GitHub ↗</a>
+  </div>
 </nav>
+<script>
+  const d = new Date();
+  document.getElementById('today-date').textContent =
+    d.getFullYear() + '. ' +
+    String(d.getMonth() + 1).padStart(2, '0') + '. ' +
+    String(d.getDate()).padStart(2, '0');
+</script>
 
 <!-- HERO -->
 <div class="hero">
