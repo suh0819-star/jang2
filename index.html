@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>장기 투자 주식 분석기</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --text: #e6edf3;
+      --muted: #8b949e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .9rem;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .badge-repo {
+      background: var(--accent);
+      color: #000;
+      padding: .25rem .75rem;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+      background: radial-gradient(ellipse at top, #1a2332 0%, var(--bg) 70%);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-tag {
+      display: inline-block;
+      background: rgba(88,166,255,.12);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,.3);
+      padding: .25rem .9rem;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      letter-spacing: .05em;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 560px;
+      margin: 0 auto 2rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: .7rem 1.6rem;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: opacity .2s, transform .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .btn:hover { opacity: .85; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+    /* ── STATS STRIP ── */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .stat-label { color: var(--muted); font-size: .85rem; margin-top: .2rem; }
+
+    /* ── SECTIONS ── */
+    section { max-width: 960px; margin: 0 auto; padding: 4rem 2rem; }
+    section + section { border-top: 1px solid var(--border); }
+    .section-tag {
+      color: var(--accent);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+    h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 1rem; }
+    h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+
+    /* ── FEATURE GRID ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.2rem;
+      margin-top: 2rem;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: border-color .2s;
+    }
+    .feature-card:hover { border-color: var(--accent); }
+    .feature-icon {
+      font-size: 1.8rem;
+      margin-bottom: .8rem;
+    }
+    .feature-card p { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
+
+    /* ── SCORING ── */
+    .score-list { display: flex; flex-direction: column; gap: .8rem; margin-top: 1.5rem; }
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+    }
+    .score-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(88,166,255,.15);
+      color: var(--accent);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .score-item .label { font-weight: 600; }
+    .score-item .desc { color: var(--muted); font-size: .87rem; margin-top: .1rem; }
+
+    /* ── SIGNALS ── */
+    .signal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .signal-card {
+      border-radius: 12px;
+      padding: 1.2rem;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .signal-card .sig-icon { font-size: 2rem; }
+    .signal-card .sig-score { color: var(--muted); font-size: .85rem; margin: .3rem 0; }
+    .signal-card .sig-name { font-weight: 700; font-size: 1rem; }
+    .sig-buy   { background: rgba(63,185,80,.08);  border-color: rgba(63,185,80,.3);  }
+    .sig-buy   .sig-name { color: var(--green); }
+    .sig-good  { background: rgba(88,166,255,.08); border-color: rgba(88,166,255,.3); }
+    .sig-good  .sig-name { color: var(--accent); }
+    .sig-hold  { background: rgba(210,153,34,.08); border-color: rgba(210,153,34,.3); }
+    .sig-hold  .sig-name { color: var(--yellow); }
+    .sig-watch { background: rgba(248,81,73,.08);  border-color: rgba(248,81,73,.3);  }
+    .sig-watch .sig-name { color: var(--red); }
+
+    /* ── FORMULA ── */
+    .formula-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .formula-box code {
+      display: block;
+      font-family: 'Consolas', monospace;
+      color: var(--accent);
+      font-size: .95rem;
+      line-height: 2;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .code-dots { display: flex; gap: .4rem; }
+    .code-dots span {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+    pre {
+      padding: 1.2rem 1.5rem;
+      overflow-x: auto;
+      font-family: 'Consolas', monospace;
+      font-size: .88rem;
+      line-height: 1.7;
+    }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .cm  { color: var(--muted); }
+    .num { color: #79c0ff; }
+
+    /* ── OUTPUT TABLE ── */
+    .table-wrap { overflow-x: auto; margin-top: 1.5rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    th {
+      background: var(--surface);
+      color: var(--muted);
+      padding: .7rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: .7rem 1rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .tag-strong { color: var(--green);  font-weight: 700; }
+    .tag-buy    { color: var(--accent); font-weight: 700; }
+    .tag-hold   { color: var(--yellow); font-weight: 700; }
+    .tag-watch  { color: var(--red);    font-weight: 700; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .85rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .stats { gap: 1.5rem; }
+      .hero { padding: 4rem 1.5rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    📈 <span>StockAnalyzer</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">기능</a>
+    <a href="#scoring">스코어링</a>
+    <a href="#usage">사용법</a>
+    <a href="#output">출력</a>
+  </div>
+  <a class="badge-repo" href="https://github.com/suh0819-star/jang2" target="_blank">GitHub ↗</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">yfinance · pandas · Python</div>
+  <h1>장기 투자 주식 분석기<br/><em>Long-Term Stock Analyzer</em></h1>
+  <p>펀더멘털 + 기술적 분석을 결합한 4단계 스코어링으로<br/>복수 종목을 일괄 분석하고 리스크 기반 매수 수량까지 산출합니다.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="https://github.com/suh0819-star/jang2" target="_blank">⬇ GitHub에서 보기</a>
+    <a class="btn btn-secondary" href="#usage">사용법 보기</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-value">4</div>
+    <div class="stat-label">스코어링 조건</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">5Y</div>
+    <div class="stat-label">가격 데이터 기간</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">3Y</div>
+    <div class="stat-label">백테스트 기간</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">2%</div>
+    <div class="stat-label">포지션당 최대 손실</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-tag">Features</div>
+  <h2>주요 기능</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3>멀티 종목 분석</h3>
+      <p>티커 리스트 입력 시 일괄 분석 후 정렬된 DataFrame 반환</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏦</div>
+      <h3>펀더멘털 체크</h3>
+      <p>ROE, 부채비율, PER을 5년 평균과 비교해 저평가 구간 탐지</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📉</div>
+      <h3>기술적 추세</h3>
+      <p>MA120 / MA200 기반으로 장기 상승 추세 여부 판별</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚖️</div>
+      <h3>포지션 사이징</h3>
+      <p>총자산 대비 2% 손실 한도로 권장 매수 수량 자동 계산</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>3년 백테스트</h3>
+      <p>누적 수익률과 최대 낙폭(MDD)으로 장기 변동성 검증</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🇰🇷</div>
+      <h3>한국 주식 지원</h3>
+      <p><code>.KS</code> 티커로 KRX 종목(삼성전자 등) 동일하게 분석</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCORING -->
+<section id="scoring">
+  <div class="section-tag">Scoring Logic</div>
+  <h2>4단계 스코어링</h2>
+
+  <div class="score-list">
+    <div class="score-item">
+      <div class="score-num">1</div>
+      <div>
+        <div class="label">수익성 — ROE &gt; 10%</div>
+        <div class="desc">자기자본이익률이 10%를 초과할 경우 우수한 수익 창출 기업으로 평가</div>
+      </div>
+    </div>
+    <div class="score-item">
+      <div class="score-num">2</div>
+      <div>
+        <div class="label">재무 건전성 — D/E &lt; 100</div>
+        <div class="desc">부채비율이 100 미만일 경우 안정적인 재무 구조로 판단</div>
+      </div>
+    </div>
+    <div class="score-item">
+      <div class="score-num">3</div>
+      <div>
+        <div class="label">밸류에이션 — 현재 PER &lt; 5년 평균 PER</div>
+        <div class="desc">현재 주가수익비율이 5년 평균보다 낮으면 역사적 저평가 구간으로 간주</div>
+      </div>
+    </div>
+    <div class="score-item">
+      <div class="score-num">4</div>
+      <div>
+        <div class="label">기술적 추세 — 현재가 &gt; MA120</div>
+        <div class="desc">120일 이동평균선 위에서 거래될 경우 장기 상승 추세 유지로 판단</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 2rem;">
+    <h3 style="margin-bottom:1rem;">투자 신호</h3>
+    <div class="signal-grid">
+      <div class="signal-card sig-buy">
+        <div class="sig-icon">★</div>
+        <div class="sig-score">4 / 4점</div>
+        <div class="sig-name">Strong Buy</div>
+      </div>
+      <div class="signal-card sig-good">
+        <div class="sig-icon">▲</div>
+        <div class="sig-score">3 / 4점</div>
+        <div class="sig-name">Buy</div>
+      </div>
+      <div class="signal-card sig-hold">
+        <div class="sig-icon">◆</div>
+        <div class="sig-score">2 / 4점</div>
+        <div class="sig-name">Hold</div>
+      </div>
+      <div class="signal-card sig-watch">
+        <div class="sig-icon">▼</div>
+        <div class="sig-score">0~1 / 4점</div>
+        <div class="sig-name">Watch</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem;">
+    <h3>포지션 사이징 공식</h3>
+    <div class="formula-box">
+      <code>최대 허용 손실  = 총자산 × 2%       → 기본 $2,000</code>
+      <code>주당 손실액     = 현재가 × 10%      → 손절 기준</code>
+      <code>권장 매수 수량  = floor(최대손실 / 주당손실액)</code>
+    </div>
+  </div>
+</section>
+
+<!-- USAGE -->
+<section id="usage">
+  <div class="section-tag">Usage</div>
+  <h2>사용법</h2>
+
+  <h3 style="margin-bottom:.5rem; margin-top:1.5rem;">설치</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <span style="background:#ff5f57"></span>
+        <span style="background:#febc2e"></span>
+        <span style="background:#28c840"></span>
+      </div>
+      <span>bash</span>
+    </div>
+    <pre>pip install yfinance pandas numpy</pre>
+  </div>
+
+  <h3 style="margin-bottom:.5rem; margin-top:1.5rem;">기본 실행</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <span style="background:#ff5f57"></span>
+        <span style="background:#febc2e"></span>
+        <span style="background:#28c840"></span>
+      </div>
+      <span>python</span>
+    </div>
+    <pre><span class="kw">from</span> stock_analyzer <span class="kw">import</span> analyze_long_term_stocks, print_report
+
+<span class="cm"># 미국 주식</span>
+tickers = [<span class="str">"AAPL"</span>, <span class="str">"MSFT"</span>, <span class="str">"GOOGL"</span>, <span class="str">"NVDA"</span>]
+df = <span class="fn">analyze_long_term_stocks</span>(tickers, total_capital=<span class="num">100_000</span>)
+<span class="fn">print_report</span>(df)
+
+<span class="cm"># 한국 주식 (삼성전자, SK하이닉스)</span>
+kr_tickers = [<span class="str">"005930.KS"</span>, <span class="str">"000660.KS"</span>]
+df_kr = <span class="fn">analyze_long_term_stocks</span>(kr_tickers, total_capital=<span class="num">100_000</span>)
+
+<span class="cm"># CSV 저장</span>
+df.to_csv(<span class="str">"stock_analysis.csv"</span>, index=<span class="kw">False</span>)</pre>
+  </div>
+
+  <h3 style="margin-bottom:.5rem; margin-top:1.5rem;">설정값 커스터마이징</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <span style="background:#ff5f57"></span>
+        <span style="background:#febc2e"></span>
+        <span style="background:#28c840"></span>
+      </div>
+      <span>stock_analyzer.py</span>
+    </div>
+    <pre>TOTAL_CAPITAL   = <span class="num">100_000</span>  <span class="cm"># 총 투자 자산 (USD)</span>
+MAX_LOSS_PCT    = <span class="num">0.02</span>     <span class="cm"># 포지션당 최대 손실 비율 (2%)</span>
+STOP_LOSS_PCT   = <span class="num">0.10</span>     <span class="cm"># 손절 기준 (10%)</span>
+ROE_THRESHOLD   = <span class="num">0.10</span>     <span class="cm"># ROE 기준선 (10%)</span>
+DE_THRESHOLD    = <span class="num">100</span>      <span class="cm"># 부채비율 기준선</span>
+MA_TREND_WINDOW = <span class="num">120</span>      <span class="cm"># 추세 판단 이동평균 기간 (일)</span></pre>
+  </div>
+</section>
+
+<!-- OUTPUT -->
+<section id="output">
+  <div class="section-tag">Output</div>
+  <h2>출력 예시</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Signal</th>
+          <th>Score</th>
+          <th>Current Price</th>
+          <th>Rec. Qty</th>
+          <th>3Y Return</th>
+          <th>MDD</th>
+          <th>ROE</th>
+          <th>D/E</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>NVDA</strong></td>
+          <td><span class="tag-strong">★ Strong Buy</span></td>
+          <td>4/4</td>
+          <td>$875.40</td>
+          <td>22</td>
+          <td>+612.3%</td>
+          <td>-66.1%</td>
+          <td>55.8%</td>
+          <td>44.2</td>
+        </tr>
+        <tr>
+          <td><strong>MSFT</strong></td>
+          <td><span class="tag-buy">▲ Buy</span></td>
+          <td>3/4</td>
+          <td>$415.20</td>
+          <td>47</td>
+          <td>+89.4%</td>
+          <td>-37.5%</td>
+          <td>38.5%</td>
+          <td>39.8</td>
+        </tr>
+        <tr>
+          <td><strong>AAPL</strong></td>
+          <td><span class="tag-buy">▲ Buy</span></td>
+          <td>3/4</td>
+          <td>$189.30</td>
+          <td>105</td>
+          <td>+54.1%</td>
+          <td>-31.0%</td>
+          <td>147.2%</td>
+          <td>181.0</td>
+        </tr>
+        <tr>
+          <td><strong>GOOGL</strong></td>
+          <td><span class="tag-hold">◆ Hold</span></td>
+          <td>2/4</td>
+          <td>$172.60</td>
+          <td>115</td>
+          <td>+41.8%</td>
+          <td>-44.5%</td>
+          <td>25.3%</td>
+          <td>9.7</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--muted); font-size:.82rem; margin-top:.8rem;">※ 위 수치는 예시이며 실제 분석 결과와 다를 수 있습니다.</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>본 도구는 <strong>참고용 분석 도구</strong>이며, 투자 권유가 아닙니다.</p>
+  <p style="margin-top:.5rem;">
+    Built with ❤ · <a href="https://github.com/suh0819-star/jang2" target="_blank">GitHub</a>
+  </p>
+</footer>
+
+</body>
+</html>
