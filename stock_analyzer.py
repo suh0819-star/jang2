@@ -1,7 +1,12 @@
+import os
+import math
 import yfinance as yf
 import pandas as pd
 import numpy as np
-import math
+from dotenv import load_dotenv
+
+load_dotenv()  # .env 파일 로드
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # ──────────────────────────────────────────────
 #  CONFIGURATION
