@@ -450,18 +450,21 @@
     String(d.getMonth() + 1).padStart(2, '0') + '. ' +
     String(d.getDate()).padStart(2, '0');
 
-  // ── API Key 저장/불러오기 ──
+  // ── DOM 로드 후 초기화 ──
+  document.addEventListener('DOMContentLoaded', function () {
+
+  // API Key 저장/불러오기
   const keyInput = document.getElementById('api-key-input');
   const saved = localStorage.getItem('gemini_api_key');
   if (saved) keyInput.value = saved;
 
-  function saveKey() {
+  window.saveKey = function () {
     const key = keyInput.value.trim();
     if (!key) return alert('API 키를 입력해주세요.');
     localStorage.setItem('gemini_api_key', key);
     keyInput.blur();
     showToast('API 키가 저장되었습니다.');
-  }
+  };
 
   function showToast(msg) {
     const t = document.createElement('div');
@@ -483,8 +486,10 @@
 
   // Enter 전송 / Shift+Enter 줄바꿈
   chatInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.sendMessage(); }
   });
+
+  window.sendMessage = sendMessage;
 
   function appendMsg(role, text, isLoading = false) {
     const wrap = document.createElement('div');
@@ -552,6 +557,8 @@
       chatInput.focus();
     }
   }
+
+  }); // end DOMContentLoaded
 </script>
 
 <!-- HERO -->
